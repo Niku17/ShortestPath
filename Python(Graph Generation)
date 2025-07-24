@@ -1,0 +1,40 @@
+import osmnx as os
+import networkx as nx
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+geolocators=Nominatim(user_agent="myProject")
+def get_coordinates(location):
+    loc=geolocators.geocode(location)
+    if loc:
+        return (loc.latitude,loc.longitude)
+    else:
+        print("Unable to fetch the coordinates of the locations")
+        quit()
+source=input(" Enter the name of the source location ")
+destination=input(" Enter the name of the destination location ")
+source_coordinates=get_coordinates(source)
+destination_coordinates=get_coordinates(destination)
+G=os.graph_from_point(source_coordinates,dist=3000,network_type="drive")
+source_node=os.nearest_nodes(G,  source_coordinates[1],source_coordinates[0])
+destination_node=os.nearest_nodes(G,destination_coordinates[1],destination_coordinates[1]) # phele longitude liya uske baad latitude.However generally phele latitude hota hai then longitude
+
+node_id={}
+reverse_id={}
+i=1;
+for node in G.nodes():
+    node_id[node]=i
+    reverse_id[i]=node
+    i+=1
+# Ab edges ka data le lete hai ,usse graph bnalenge i.e adjacency list or matrix.
+edges=[]
+for u,v,data in G.edges(data=True):
+    s=node_id[u]
+    d=node_id[v]
+    dist=data['length']
+    edges.append([s,d,dist])
+# Now we will store this one into a file.
+with open("data.txt","w") as f:
+    f.write(str(len(node_id))+" "+str(len(edges))+"\n")
+    for x,y,z in edges:
+        f.write(str(x)+" "+str(y)+" "+str(z)+"\n")
+    f.write(str(node_id[source_node])+" "+str(node_id[destination_node])+"\n")
